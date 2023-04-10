@@ -7,8 +7,36 @@ import requests
 from Settings import VK_TOKEN as vk_token
 from Settings import base_vk_link as vk_link
 
-def connected_vk(): # Подключаемся к VK
+def connected_vk():
     pass
+
+
+class VK:  # Подключаемся к VK
+    def __init__(self, access_token, user_id, version='5.131'):
+        self.token = access_token
+        self.id = user_id
+        self.version = version
+        self.params = {'access_token': self.token, 'v': self.version}
+
+    def users_info(self):
+        url = vk_link + 'users.get'
+        params = {'user_ids': self.id}
+        response = requests.get(url, params={**self.params, **params})
+        return response.json()
+
+    def fotos_get(self, f_count, user_id, album='profile'):
+        url = vk_link + 'photos.get'
+        params = {'owner_id': user_id,
+                  'album_id': album,
+                  'extended': '1',
+                  'photo_sizes': '1',
+                  'count': f_count
+                  }
+        response = requests.get(url, params={**self.params, **params})
+        return response.json()
+
+
+
 
 def telegram_bot(): # Подключаемся к Telegram
     pass
