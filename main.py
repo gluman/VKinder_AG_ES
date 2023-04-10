@@ -7,9 +7,6 @@ import requests
 from Settings import VK_TOKEN as vk_token
 from Settings import base_vk_link as vk_link
 
-def connected_vk():
-    pass
-
 
 class VK:  # Подключаемся к VK
     def __init__(self, access_token, user_id, version='5.131'):
@@ -34,8 +31,6 @@ class VK:  # Подключаемся к VK
                   }
         response = requests.get(url, params={**self.params, **params})
         return response.json()
-
-
 
 
 def telegram_bot(): # Подключаемся к Telegram
