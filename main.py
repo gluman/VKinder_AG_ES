@@ -3,11 +3,10 @@ import json
 import time
 from pprint import pprint as pp
 import requests
-
+from vk_api.longpoll import VkEventType
 
 from vkbot_connect import longpoll
 from vkbot_connect import write_msg
-
 
 
 class VK:  # Подключаемся к VK
@@ -36,52 +35,77 @@ class VK:  # Подключаемся к VK
 
 
 def input_value_for_search():   # Нужно переделать для телеграмм бота
-    age = int(input('Введите возраст: '))
-    sex = input('Введите пол(м/ж): ')
-    city = input('Введите город для поиска:')
-
+    # age = int(input('Введите возраст: '))
+    # sex = input('Введите пол(м/ж): ')
+    # city = input('Введите город для поиска:')
+    pass
 
 
 
 def justwork():
     Run = True
     pp('Прежде чем начать изучи README.md')
-
-
+    scenario = ''
     while Run:
         for event in longpoll.listen():
             if event.type == VkEventType.MESSAGE_NEW:
 
                 if event.to_me:
                     request = event.text
+                    if request == "help" and scenario == '':
+                        write_msg(event.user_id, f'help - вывод данной справки')
+                        write_msg(event.user_id, f'find - ввод критериев и поиск')
+                        write_msg(event.user_id, f'show - просмотр ранее полученных результатов')
+                        write_msg(event.user_id, f'quit - выход из программы')
 
-                    if request == "привет":
-                        write_msg(event.user_id, f"Хай, {event.user_id}")
-                    elif request == "пока":
-                        write_msg(event.user_id, "Пока((")
+                    elif request == "find":
+                        write_msg(event.user_id, f'Укажите возраст для поиска (от 18 до 99):')
+                        scenario = 'get_age'
+                    elif type(request) == int and 18 <= int(request) <= 99 and scenario == 'get_age':
+                        age = int(request)
+                        scenario = 'get_sex'
+
+                    elif request in ['м', 'ж']:
+                        sex = request
+                        scenario = 'get_city'
+
+                    elif len(request) >= 3:
+                        city = request
+
+                    elif request == "quit":
+                        write_msg(event.user_id, "Спасибо за использование программы. До свидания!")
+                        Run = False
+
+                    elif request == 'clear':
+                        scenario = ''
+
+                    elif scenario != '':
+                        write_msg(event.user_id, "Повторите ввод! Или начать всё сначала(clear)")
+
                     else:
-                        write_msg(event.user_id, "Не поняла вашего ответа...")
+                        write_msg(event.user_id, "Введенные данные не распознаны! Начать всё сначала: clear")
 
 
 
 
 
 
-        command = input('Введите команду(help - справка):')
-        if command == 'help':
-            pp('help - вывод данной справки'
-               'find - ввод критериев и поиск'
-               'show - просмотр ранее полученных результатов'
-               'quit - выход из программы')
-        elif command == 'find':
-            input_value_for_search()
-        elif command == 'quit':
-            pp('Спасибо за использование программы. До свидания!')
-            Run = False
-        elif command == 'show':
-            pass
-        else:
-            pp('Команда не распознана! ')
+
+        # command = input('Введите команду(help - справка):')
+        # if command == 'help':
+        #     pp('help - вывод данной справки'
+        #        'find - ввод критериев и поиск'
+        #        'show - просмотр ранее полученных результатов'
+        #        'quit - выход из программы')
+        # elif command == 'find':
+        #     input_value_for_search()
+        # elif command == 'quit':
+        #     pp('Спасибо за использование программы. До свидания!')
+        #     Run = False
+        # elif command == 'show':
+        #     pass
+        # else:
+        #     pp('Команда не распознана! ')
 
 
 if __name__ == '__main__':
