@@ -11,4 +11,5 @@ with psycopg2.connect(database="VKinderDB", user="postgres", password="123", hos
             def show_results():
                 pass
 
-
+            def save_person_to_db():
+                pass

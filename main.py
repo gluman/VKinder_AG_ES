@@ -2,45 +2,25 @@ import datetime as d
 import json
 import time
 from pprint import pprint as pp
-import requests
-from vk_api.longpoll import VkEventType
 
+from vk_api.longpoll import VkEventType
+import numbers
 from vkbot_connect import longpoll
 from vkbot_connect import write_msg
+from vkbot_connect import VK_SEARCH, token
+from db_connect import save_person_to_db
 
 
-class VK:  # Подключаемся к VK
-    def __init__(self, access_token, user_id, version='5.131'):
-        self.token = access_token
-        self.id = user_id
-        self.version = version
-        self.params = {'access_token': self.token, 'v': self.version}
-
-    def users_info(self):
-        url = vk_link + 'users.get'
-        params = {'user_ids': self.id}
-        response = requests.get(url, params={**self.params, **params})
-        return response.json()
-
-    def fotos_get(self, f_count, user_id, album='profile'):
-        url = vk_link + 'photos.get'
-        params = {'owner_id': user_id,
-                  'album_id': album,
-                  'extended': '1',
-                  'photo_sizes': '1',
-                  'count': f_count
-                  }
-        response = requests.get(url, params={**self.params, **params})
-        return response.json()
 
 
-def input_value_for_search():   # Нужно переделать для телеграмм бота
-    # age = int(input('Введите возраст: '))
-    # sex = input('Введите пол(м/ж): ')
-    # city = input('Введите город для поиска:')
-    pass
 
+def save_person_information(user_id):
+    vk_search = VK_SEARCH(token, user_id)
+    person_data = vk_search.get_users_info(user_id)
+    save_person_to_db()
 
+def input_value_for_search(age, sex, city, user_id)
+    vk_search = VK_SEARCH(token, user_id)
 
 def justwork():
     Run = True
@@ -61,16 +41,37 @@ def justwork():
                     elif request == "find":
                         write_msg(event.user_id, f'Укажите возраст для поиска (от 18 до 99):')
                         scenario = 'get_age'
-                    elif type(request) == int and 18 <= int(request) <= 99 and scenario == 'get_age':
-                        age = int(request)
-                        scenario = 'get_sex'
 
-                    elif request in ['м', 'ж']:
+                    elif request.isdigit() and scenario == 'get_age':
+                        if 17 < int(request) and int(request) < 100:
+                            age = int(request)
+                            scenario = 'get_sex'
+                            write_msg(event.user_id, f'Укажите пол для поиска (м или ж):')
+                        else:
+                            write_msg(event.user_id, f'Неверно задано значение, повторите ввод')
+
+                    elif request in ['м', 'ж'] and scenario == 'get_sex':
                         sex = request
                         scenario = 'get_city'
+                        write_msg(event.user_id, f'Укажите город для поиска (минимум 3 символа):')
 
-                    elif len(request) >= 3:
+                    elif len(request) >= 3 and scenario == 'get_city':
                         city = request
+                        scenario = 'find_it'
+
+                        save_person_information(event.user_id)
+
+                        input_value_for_search(age, sex, city)
+
+
+                    #     пишем данные персоны (пользователя, с которым взаимодействуем)
+
+                    #   записываем в БД данные персоны и данные поиска.
+                    #   формируем поисковые запросы через api vk
+                    #   сохраняем полученные запросы в json
+                    #   записываем полученные запросы в БД
+
+
 
                     elif request == "quit":
                         write_msg(event.user_id, "Спасибо за использование программы. До свидания!")
@@ -80,7 +81,7 @@ def justwork():
                         scenario = ''
 
                     elif scenario != '':
-                        write_msg(event.user_id, "Повторите ввод! Или начать всё сначала(clear)")
+                        write_msg(event.user_id, "Повторите ввод! Или начать всё сначала: clear")
 
                     else:
                         write_msg(event.user_id, "Введенные данные не распознаны! Начать всё сначала: clear")
