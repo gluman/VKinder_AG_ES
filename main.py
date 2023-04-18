@@ -4,8 +4,10 @@ import time
 from pprint import pprint as pp
 import requests
 
-from Settings import VK_TOKEN as vk_token
-from Settings import base_vk_link as vk_link
+
+from vkbot_connect import longpoll
+from vkbot_connect import write_msg
+
 
 
 class VK:  # Подключаемся к VK
@@ -33,17 +35,38 @@ class VK:  # Подключаемся к VK
         return response.json()
 
 
-def telegram_bot(): # Подключаемся к Telegram
-    pass
 def input_value_for_search():   # Нужно переделать для телеграмм бота
     age = int(input('Введите возраст: '))
     sex = input('Введите пол(м/ж): ')
     city = input('Введите город для поиска:')
 
+
+
+
 def justwork():
     Run = True
     pp('Прежде чем начать изучи README.md')
+
+
     while Run:
+        for event in longpoll.listen():
+            if event.type == VkEventType.MESSAGE_NEW:
+
+                if event.to_me:
+                    request = event.text
+
+                    if request == "привет":
+                        write_msg(event.user_id, f"Хай, {event.user_id}")
+                    elif request == "пока":
+                        write_msg(event.user_id, "Пока((")
+                    else:
+                        write_msg(event.user_id, "Не поняла вашего ответа...")
+
+
+
+
+
+
         command = input('Введите команду(help - справка):')
         if command == 'help':
             pp('help - вывод данной справки'
