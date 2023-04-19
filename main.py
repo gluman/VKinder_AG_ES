@@ -11,16 +11,15 @@ from vkbot_connect import VK_SEARCH, token
 from db_connect import save_person_to_db
 
 
-
-
-
 def save_person_information(user_id):
-    vk_search = VK_SEARCH(token, user_id)
-    person_data = vk_search.get_users_info(user_id)
-    save_person_to_db()
+    # vk_search = VK_SEARCH(token, user_id)
+    # person_data = vk_search.get_users_info(user_id)
+    save_person_to_db(user_id)
 
-def input_value_for_search(age, sex, city, user_id)
+
+def input_value_for_search(age, sex, city, user_id):
     vk_search = VK_SEARCH(token, user_id)
+
 
 def justwork():
     Run = True
@@ -58,7 +57,6 @@ def justwork():
                     elif len(request) >= 3 and scenario == 'get_city':
                         city = request
                         scenario = 'find_it'
-
                         save_person_information(event.user_id)
 
                         input_value_for_search(age, sex, city)
@@ -70,8 +68,6 @@ def justwork():
                     #   формируем поисковые запросы через api vk
                     #   сохраняем полученные запросы в json
                     #   записываем полученные запросы в БД
-
-
 
                     elif request == "quit":
                         write_msg(event.user_id, "Спасибо за использование программы. До свидания!")
@@ -87,28 +83,5 @@ def justwork():
                         write_msg(event.user_id, "Введенные данные не распознаны! Начать всё сначала: clear")
 
 
-
-
-
-
-
-        # command = input('Введите команду(help - справка):')
-        # if command == 'help':
-        #     pp('help - вывод данной справки'
-        #        'find - ввод критериев и поиск'
-        #        'show - просмотр ранее полученных результатов'
-        #        'quit - выход из программы')
-        # elif command == 'find':
-        #     input_value_for_search()
-        # elif command == 'quit':
-        #     pp('Спасибо за использование программы. До свидания!')
-        #     Run = False
-        # elif command == 'show':
-        #     pass
-        # else:
-        #     pp('Команда не распознана! ')
-
-
 if __name__ == '__main__':
     justwork()
-

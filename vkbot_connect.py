@@ -13,8 +13,6 @@ longpoll = VkLongPoll(vk)
 
 
 
-
-
 def write_msg(user_id, message):
     vk.method('messages.send', {'user_id': user_id, 'message': message,  'random_id': randrange(10 ** 7),})
 
