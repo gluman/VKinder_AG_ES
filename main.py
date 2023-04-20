@@ -12,9 +12,9 @@ from db_connect import save_person_to_db
 
 
 def save_person_information(user_id):
-    # vk_search = VK_SEARCH(token, user_id)
-    # person_data = vk_search.get_users_info(user_id)
     save_person_to_db(user_id)
+
+
 
 
 def input_value_for_search(age, sex, city, user_id):
@@ -57,12 +57,15 @@ def justwork():
                     elif len(request) >= 3 and scenario == 'get_city':
                         city = request
                         scenario = 'find_it'
-                        save_person_information(event.user_id)
+                        #     пишем данные персоны (пользователя, с которым взаимодействуем)
+                        save_person_to_db(event.user_id)
 
-                        input_value_for_search(age, sex, city)
+                        save_value_for_search(age, sex, city)
+                        vk_search = VK_SEARCH(token, user_id)
+
+                        # person_data = vk_search.get_users_info(user_id)
 
 
-                    #     пишем данные персоны (пользователя, с которым взаимодействуем)
 
                     #   записываем в БД данные персоны и данные поиска.
                     #   формируем поисковые запросы через api vk
