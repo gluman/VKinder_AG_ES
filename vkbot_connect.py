@@ -2,16 +2,14 @@ from random import randrange
 import requests
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
-from Settings import VK_TOKEN, base_vk_link as vk_link
+from Settings import vk_group_token, vk_base_link as vk_link
 
 # token = input('Token: ')
-token = VK_TOKEN
+gruop_token = vk_group_token
 
 
-vk = vk_api.VkApi(token=token)
+vk = vk_api.VkApi(token=vk_group_token)
 longpoll = VkLongPoll(vk)
-
-
 
 def write_msg(user_id, message):
     vk.method('messages.send', {'user_id': user_id, 'message': message,  'random_id': randrange(10 ** 7),})
@@ -40,7 +38,17 @@ class VK_SEARCH:  # Подключаемся к VK
         response = requests.get(url, params={**self.params, **params})
         return response.json()
 
-    def serach_users(self, age, sex, city):
+    def search_users(self, age, sex, city):
         url = vk_link + 'users.get'
-        params = {'user_ids': self.id}
+        params = {'age_from': age,
+                  'age_to': age,
+                  'sex': sex,
+                  'city': city,
+                  'count': 3
+                  }
+        response = requests.get(url, params={**self.params, **params})
+        return response.json()
+
+
+
 

@@ -1,29 +1,14 @@
-import datetime as d
-import json
-import time
-from pprint import pprint as pp
-
 from vk_api.longpoll import VkEventType
-import numbers
-from vkbot_connect import longpoll
-from vkbot_connect import write_msg
-from vkbot_connect import VK_SEARCH, token
-from db_connect import save_person_to_db
-
-
-def save_person_information(user_id):
-    save_person_to_db(user_id)
-
-
-
-
+from vkbot_connect import longpoll, VK_SEARCH, write_msg
+from db_connect import save_person_to_db, save_value_for_search
+from Settings import vk_user_token
+import pprint
 def input_value_for_search(age, sex, city, user_id):
-    vk_search = VK_SEARCH(token, user_id)
-
+    pass
 
 def justwork():
     Run = True
-    pp('Прежде чем начать изучи README.md')
+
     scenario = ''
     while Run:
         for event in longpoll.listen():
@@ -60,17 +45,11 @@ def justwork():
                         #     пишем данные персоны (пользователя, с которым взаимодействуем)
                         save_person_to_db(event.user_id)
 
-                        save_value_for_search(age, sex, city)
-                        vk_search = VK_SEARCH(token, user_id)
+                        save_value_for_search(event.user_id, age, sex, city)  # cохраняем пролученные значения в бд
+                        vk_search = VK_SEARCH(vk_user_token, event.user_id) # создаем экземпляр класса
+                        result = vk_search.search_users(age, sex, city)
+                        pprint(result)
 
-                        # person_data = vk_search.get_users_info(user_id)
-
-
-
-                    #   записываем в БД данные персоны и данные поиска.
-                    #   формируем поисковые запросы через api vk
-                    #   сохраняем полученные запросы в json
-                    #   записываем полученные запросы в БД
 
                     elif request == "quit":
                         write_msg(event.user_id, "Спасибо за использование программы. До свидания!")

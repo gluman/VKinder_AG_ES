@@ -1,8 +1,5 @@
 import psycopg2
 
-
-
-
 def insert_partners(crit1, crit2, crit3):
     pass
 
@@ -22,10 +19,15 @@ def save_person_to_db(id):
 
     return
 
-def save_value_for_search(age, sex, city):
+def save_value_for_search(id, age, sex, city):
     with psycopg2.connect(database="VKinderDB", user="postgres", password="123", host='localhost') as conn:
         with conn.cursor() as cur:
+            name_ = f'{id}_{age}_{sex}_{city}'
             cur.execute(""" 
+                              WITH pid as (
+                              SELECT id_person from person
+                              WHERE id_vk_person = %s
+                              )
                               INSERT INTO querys(
                                                 name, 
                                                 id_person, 
@@ -33,8 +35,8 @@ def save_value_for_search(age, sex, city):
                                                 partner_city, 
                                                 parnter_sex
                                                 )
-                              VALUES(%s, %s, %s, %s, %s)
-                              ON CONFLICT (id_query)
+                              VALUES(%s, pid.id_person, %s, %s, %s)
+                              ON CONFLICT
                               DO NOTHING;
-                              """, (id,))
+                              """, (id, name_, age, city, sex))
             conn.commit()
