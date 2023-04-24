@@ -3,8 +3,6 @@ from vkbot_connect import longpoll, VK_SEARCH, write_msg
 from db_connect import save_person_to_db, save_value_for_search
 from Settings import vk_user_token
 import pprint
-def input_value_for_search(age, sex, city, user_id):
-    pass
 
 def justwork():
     Run = True
@@ -43,11 +41,10 @@ def justwork():
                         city = request
                         scenario = 'find_it'
                         #     пишем данные персоны (пользователя, с которым взаимодействуем)
-                        save_person_to_db(event.user_id)
-
-                        save_value_for_search(event.user_id, age, sex, city)  # cохраняем пролученные значения в бд
-                        vk_search = VK_SEARCH(vk_user_token, event.user_id) # создаем экземпляр класса
-                        result = vk_search.search_users(age, sex, city)
+                        save_person_to_db(event.user_id)  # Сохраняем id пользователя.
+                        save_value_for_search(event.user_id, age, sex, city)  # cохраняем пролученные значения параметров поиска в бд
+                        vk_search = VK_SEARCH(vk_user_token, event.user_id) # создаем экземпляр класса VK
+                        result = vk_search.search_users(age, sex, city)  # Делаем запрос в VK c передаваемыми параметрами, полученный результат
                         pprint(result)
 
 
@@ -62,7 +59,7 @@ def justwork():
                         write_msg(event.user_id, "Повторите ввод! Или начать всё сначала: clear")
 
                     else:
-                        write_msg(event.user_id, "Введенные данные не распознаны! Начать всё сначала: clear")
+                        write_msg(event.user_id, "Введенные данные не распознаны! help - справка. clear - ч")
 
 
 if __name__ == '__main__':
