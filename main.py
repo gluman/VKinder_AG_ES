@@ -62,7 +62,7 @@ def justwork():
                         write_msg(event.user_id, "Повторите ввод! Или начать всё сначала: clear")
 
                     else:
-                        write_msg(event.user_id, "Введенные данные не распознаны! Начать всё сначала: clear")
+                        write_msg(event.user_id, "Введенные данные не распознаны! help - справка. clear - ч")
 
 
 if __name__ == '__main__':
