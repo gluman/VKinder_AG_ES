@@ -39,12 +39,23 @@ class VK_SEARCH:  # Подключаемся к VK
         return response.json()
 
     def search_users(self, age, sex, city):
-        url = vk_link + 'users.get'
+        url = vk_link + 'users.search'
+        if sex == 'ж':
+            sex = 1
+        elif sex == 'м':
+            sex = 2
+        else:
+            sex = 0
+
+
         params = {'age_from': age,
                   'age_to': age,
                   'sex': sex,
-                  'city': city,
-                  'count': 3
+                  'hometown': city,
+                  'count': 3,
+                  'is_closed': False,
+                  'can_access_closed': True,
+
                   }
         response = requests.get(url, params={**self.params, **params})
         return response.json()

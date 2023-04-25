@@ -41,4 +41,30 @@ def save_value_for_search(id, age, sex, city):
                                 DO NOTHING
                                 RETURNING id_query;
                               """, (str(id), name_, str(age), city, sex))
+            result_id = cur.fetchall()
             conn.commit()
+            return result_id
+
+def save_result(result, id_query, sex, age, city):
+    partners_items = result['response']['items']
+    for item in partners_items:
+        name = item['first_name']
+        surname = item['last_name']
+
+        with psycopg2.connect(database="VKinderDB", user="postgres", password="123", host='localhost') as conn:
+            with conn.cursor() as cur:
+                cur.execute("""                 
+                               INSERT INTO partners(
+                                                id_query, 
+                                                name, 
+                                                surname, 
+                                                sex,
+                                                age,
+                                                city
+                                                )
+                                VALUES(%s, %s, %s , %s, %s, %s)
+                                ON CONFLICT
+                                DO NOTHING
+                                RETURNING id_partner;
+                              """, (id_query[0], name, surname, sex, age, city))
+                conn.commit()
