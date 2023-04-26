@@ -68,3 +68,10 @@ def save_result(result, id_query, sex, age, city):
                                 RETURNING id_partner;
                               """, (id_query[0], name, surname, sex, age, city))
                 conn.commit()
+
+
+def save_result_photo(search_result):
+    pass
+
+def update_result():
+    pass
