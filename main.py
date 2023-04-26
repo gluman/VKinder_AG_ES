@@ -46,8 +46,8 @@ def justwork():
                         vk_search = VK_SEARCH(vk_user_token, event.user_id) # создаем экземпляр класса VK
                         result_search = vk_search.search_users(age, sex, city)  # Делаем запрос в VK c передаваемыми параметрами, полученный результат
                         save_result(result_search, id_row_query, sex, age, city) # Сохраняем полученные результаты в БД
-                        result_get_photo = vk_search.vk_get_partners_photos(result_search)
-                        save_result_photo(result_get_photo)
+                        result_get_photo = vk_search.vk_get_partners_photos(result_search) # Запрашиваем фотографии по ранее найденным людям.
+                        save_result_photo(result_get_photo) # Сохраняем найденные фотографии в БД.
                         # result_get_ext_information =
                         update_result(result_get_photo)
                         # pprint(result)
