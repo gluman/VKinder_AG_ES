@@ -2,7 +2,7 @@ from random import randrange
 import requests
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
-from Settings import vk_group_token, vk_base_link as vk_link
+from Settings import vk_group_token, vk_base_link as vk_link, count_raw_search
 
 # token = input('Token: ')
 gruop_token = vk_group_token
@@ -47,15 +47,13 @@ class VK_SEARCH:  # Подключаемся к VK
         else:
             sex = 0
 
-
         params = {'age_from': age,
                   'age_to': age,
                   'sex': sex,
                   'hometown': city,
-                  'count': 3,
-                  'is_closed': False,
-                  'can_access_closed': True,
-
+                  'count': count_raw_search,
+                  'is_closed': 'false',
+                  'has_photo': 1,
                   }
         response = requests.get(url, params={**self.params, **params})
         return response.json()
@@ -63,7 +61,7 @@ class VK_SEARCH:  # Подключаемся к VK
     def vk_get_partners_photos(self, partners_info, album='profile'):
         url = vk_link + 'photos.get'
         result = []
-        for partner in partners_info['response']['items']:
+        for partner in partners_info:
             params = {'owner_id': partner['id'],
                       'album_id': album,
                       'extended': '1',
@@ -74,3 +72,5 @@ class VK_SEARCH:  # Подключаемся к VK
             result.append(prom_result)
 
         return result
+    def vk_get_current_foto(self):
+        pass

@@ -1,5 +1,6 @@
 import psycopg2
 
+
 def insert_partners(crit1, crit2, crit3):
     pass
 
@@ -30,7 +31,7 @@ def save_value_for_search(id, age, sex, city):
                                 )
                                 
                                 INSERT INTO querys(
-                                                name, 
+                                                name_, 
                                                 id_person, 
                                                 partner_age, 
                                                 partner_city, 
@@ -45,8 +46,8 @@ def save_value_for_search(id, age, sex, city):
             conn.commit()
             return result_id
 
-def save_result(result, id_query, sex, age, city):
-    partners_items = result['response']['items']
+def save_result(result, id_person, sex, age, city):
+    partners_items = result
     for item in partners_items:
         name = item['first_name']
         surname = item['last_name']
@@ -54,24 +55,30 @@ def save_result(result, id_query, sex, age, city):
         with psycopg2.connect(database="VKinderDB", user="postgres", password="123", host='localhost') as conn:
             with conn.cursor() as cur:
                 cur.execute("""                 
+                                WITH pid as (
+                                SELECT id_person 
+                                FROM person
+                                WHERE id_vk_person = %s
+                                )
+                               
                                INSERT INTO partners(
-                                                id_query, 
-                                                name, 
+                                                id_person, 
+                                                name_, 
                                                 surname, 
                                                 sex,
-                                                age,
+                                                age_,
                                                 city
                                                 )
-                                VALUES(%s, %s, %s , %s, %s, %s)
+                                VALUES((SELECT * FROM pid), %s, %s , %s, %s, %s)
                                 ON CONFLICT
                                 DO NOTHING
                                 RETURNING id_partner;
-                              """, (id_query[0], name, surname, sex, age, city))
+                              """, (str(id_person), name, surname, sex, str(age), city))
                 conn.commit()
 
 
 def save_result_photo(search_result):
     pass
 
-def update_result():
+def update_result(info):
     pass
