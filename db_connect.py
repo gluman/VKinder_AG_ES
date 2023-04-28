@@ -51,7 +51,7 @@ def save_result(result, id_person, sex, age, city):
     for item in partners_items:
         name = item['first_name']
         surname = item['last_name']
-
+        id_vk = item['id']
         with psycopg2.connect(database="VKinderDB", user="postgres", password="123", host='localhost') as conn:
             with conn.cursor() as cur:
                 cur.execute("""                 
@@ -62,12 +62,37 @@ def save_result(result, id_person, sex, age, city):
                                 )
                                
                                INSERT INTO partners(
-                                                id_person, 
+                                                id_person,
+                                                id_vk_partner, 
                                                 name_, 
                                                 surname, 
                                                 sex,
                                                 age_,
                                                 city
+                                                )
+                                VALUES((SELECT * FROM pid), %s, %s, %s , %s, %s, %s)
+                                ON CONFLICT
+                                DO NOTHING
+                                RETURNING id_partner;
+                              """, (str(id_person), str(id_vk), name, surname, sex, str(age), city))
+                conn.commit()
+
+
+def save_result_photo(_result):
+    photos = _result
+    for item in _result:
+        photos_partner = item['respose']['items']
+        for photo in photos_partner:
+            owner = photo['owner_id']
+        with psycopg2.connect(database="VKinderDB", user="postgres", password="123", host='localhost') as conn:
+
+            with conn.cursor() as cur:
+                cur.execute("""                 
+                               INSERT INTO partners_photos(
+                                                id_partner, 
+                                                photo, 
+                                                photo_link, 
+                                                num_like,
                                                 )
                                 VALUES((SELECT * FROM pid), %s, %s , %s, %s, %s)
                                 ON CONFLICT
@@ -77,8 +102,7 @@ def save_result(result, id_person, sex, age, city):
                 conn.commit()
 
 
-def save_result_photo(search_result):
-    pass
+
 
 def update_result(info):
     pass

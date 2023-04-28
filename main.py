@@ -15,11 +15,13 @@ def filter_partners(info, count):
     return partners_items[0:count]
 
 
+def get_and_save_photo(list_):
+    for item in list_:
+        vk_search.vk_get_current_foto(item[])
 
 
-def justwork():
+if __name__ == '__main__':
     Run = True
-
     scenario = ''
     while Run:
         for event in longpoll.listen():
@@ -54,15 +56,28 @@ def justwork():
                         city = request
                         scenario = 'find_it'
                         #     пишем данные персоны (пользователя, с которым взаимодействуем)
-                        id_row_user_id = save_person_to_db(event.user_id)  # Сохраняем id пользователя.
-                        vk_search = VK_SEARCH(vk_user_token, event.user_id) # создаем экземпляр класса VK
-                        result_search_raw = vk_search.search_users(age, sex, city)  # Делаем запрос в VK c передаваемыми параметрами, полученный результат
+                        # Сохраняем id пользователя.
+                        id_row_user_id = save_person_to_db(event.user_id)
+
+                        # создаем экземпляр класса VK
+                        vk_search = VK_SEARCH(vk_user_token, event.user_id)
+
+                        # Делаем запрос в VK c передаваемыми параметрами, полученный результат
+                        result_search_raw = vk_search.search_users(age, sex, city)
+
                         result_search_normal = filter_partners(result_search_raw, count_filtred_search)
-                        save_result(result_search_normal, event.user_id, sex, age, city) # Сохраняем полученные результаты в БД
-                        result_get_photos = vk_search.vk_get_partners_photos(result_search_normal) # Запрашиваем фотографии по ранее найденным людям.
-                        save_result_photo(result_get_photo) # Сохраняем найденные фотографии в БД.
+
+                        # Сохраняем полученные результаты в БД
+                        save_result(result_search_normal, event.user_id, sex, age, city)
+
+                        # Запрашиваем фотографии по ранее найденным людям.
+                        result_get_photos = vk_search.vk_get_partners_photos(result_search_normal)
+
+                        # Сохраняем найденные фотографии в БД.
+                        get_and_save_photo(result_get_photos)
+
                         update_result(result_get_photos)
-                        # pprint(result)
+
 
 
                     elif request == "quit":
@@ -79,5 +94,5 @@ def justwork():
                         write_msg(event.user_id, "Введенные данные не распознаны! help - справка. clear - ч")
 
 
-if __name__ == '__main__':
-    justwork()
+
+
