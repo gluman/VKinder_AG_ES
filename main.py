@@ -17,7 +17,9 @@ def filter_partners(info, count):
 
 def get_and_save_photo(list_):
     for item in list_:
-        vk_search.vk_get_current_foto(item[])
+        owner_id = item['response']['items'][0]['owner_id']
+        count_photos = item['response']['count']
+        vk_search.vk_get_current_foto(item)
 
 
 if __name__ == '__main__':
