@@ -85,7 +85,6 @@ def save_result_photo(_result):
         for photo in photos_partner:
             owner = photo['owner_id']
         with psycopg2.connect(database="VKinderDB", user="postgres", password="123", host='localhost') as conn:
-
             with conn.cursor() as cur:
                 cur.execute("""                 
                                INSERT INTO partners_photos(

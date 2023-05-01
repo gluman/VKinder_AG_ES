@@ -69,18 +69,18 @@ class VK_SEARCH:  # Подключаемся к VK
                       }
             response = requests.get(url, params={**self.params, **params})
             prom_result = response.json()
-            raw_result.append(prom_result)
+
+            raw_result.append({'partner_id': partner['id'], 'partner_photos': prom_result})
 
 
         return raw_result
     def vk_get_current_foto(self, id_partner, photos, album='profile' ):
-        pass
         url = vk_link + 'photos.get'
         result = []
-        for partner in photos:
-            partner['response']['items']
+        for photo in photos:
+            photo['response']['items']
 
-            params = {'owner_id': partner['id'],
+            params = {'owner_id': photo['id'],
                       'album_id': album,
                       'extended': '1',
                       'photo_sizes': '1'

@@ -5,6 +5,7 @@ from Settings import vk_user_token, count_filtred_search
 import pprint
 
 
+# Отбираем только три человека у которых профиль открыт.
 def filter_partners(info, count):
     partners_items = info['response']['items']
 
@@ -14,12 +15,35 @@ def filter_partners(info, count):
             continue
     return partners_items[0:count]
 
+# Отбираем только три лучше фотографии
+def filter_free_best_photos(photos):
+    free_bets_photos = []
+    count_likes = 0
+    for photo in photos:
+        if photo['likes']['count'] > 0:
+            count = photo['likes']['count']
+            id_photo = photo['id']
+            for size in photo['sizes']:
+                if size['type'] == 'x':
+                    url_photo = size['url']
+            if url_photo == '':
+                url_photo = photo['sizes'][-1]['url']
+
+
+            free_bets_photos.append([count, id_photo, url_photo])
+
+    free_bets_photos.sort().reverse()
+    return free_bets_photos[0:3]
+
+
 
 def get_and_save_photo(list_):
-    for item in list_:
-        owner_id = item['response']['items'][0]['owner_id']
-        count_photos = item['response']['count']
-        vk_search.vk_get_current_foto(item)
+    for item in list_: # проходим по каждому из найденых людей.
+        owner_id = item['partner_id']
+        photos = item['partner_photos']['response']['items']
+        free_best_photos = filter_free_best_photos(photos)
+
+
 
 
 if __name__ == '__main__':
