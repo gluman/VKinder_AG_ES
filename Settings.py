@@ -1,4 +1,7 @@
-
+db_host = 'localhost'
+db_name = 'VKinderDB'
+db_user = 'postgres'
+db_pass = '123'
 # Service access VK key
 vk_base_link = 'https://api.vk.com/method/'
 # vk acces token
