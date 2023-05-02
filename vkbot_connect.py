@@ -87,4 +87,3 @@ class VK_SEARCH:  # Подключаемся к VK
                       }
             response = requests.get(url, params={**self.params, **params})
             prom_result = response.json()
-

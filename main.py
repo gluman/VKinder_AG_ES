@@ -1,7 +1,9 @@
 from vk_api.longpoll import VkEventType
 from vkbot_connect import longpoll, VK_SEARCH, write_msg
-from db_connect import save_person_to_db, save_value_for_search, save_result,save_result_photo,  update_result
+from db_connect import save_person_to_db, save_result, save_photo_to_db,  update_result
 from Settings import vk_user_token, count_filtred_search
+import os
+from time import sleep
 import pprint
 
 
@@ -17,7 +19,7 @@ def filter_partners(info, count):
 
 # Отбираем только три лучше фотографии
 def filter_free_best_photos(photos):
-    free_bets_photos = []
+    _photos = []
     count_likes = 0
     for photo in photos:
         if photo['likes']['count'] > 0:
@@ -30,10 +32,35 @@ def filter_free_best_photos(photos):
                 url_photo = photo['sizes'][-1]['url']
 
 
-            free_bets_photos.append([count, id_photo, url_photo])
+            _photos.append([count, id_photo, url_photo])
 
-    free_bets_photos.sort().reverse()
-    return free_bets_photos[0:3]
+    _photos.sort()
+    _photos.reverse()
+    tempary_list_photos = _photos[0:3]
+    free_bets_photos = []
+    for i in tempary_list_photos:
+        free_bets_photos.append({'likes': i[0], 'id_photo': i[1], 'url_photo': i[2]})
+
+    return free_bets_photos
+
+def tempory_save_photos(owner_id, photos):  # Сохраняем верменно локально фотографии по одному найденному человеку.
+    if not os.path.exists('Tempary_saved_photos'):
+        os.mkdir('Tempary_saved_photos')
+    photo_folder = 'Tempary_saved_photos/'.format(owner_id)
+    if not os.path.exists(photo_folder):
+        os.mkdir(photo_folder)
+    try:
+        for photo in photos:
+            r = request.get(photo['url_photo'], stream=True)
+            with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'wb') as f:
+                for buf in r.iter_content(1024):
+                    if buf:
+                        f.write(buf)
+                        sleep(2)
+        return 1
+    except:
+        return 0
+
 
 
 
@@ -42,7 +69,8 @@ def get_and_save_photo(list_):
         owner_id = item['partner_id']
         photos = item['partner_photos']['response']['items']
         free_best_photos = filter_free_best_photos(photos)
-
+        if tempory_save_photos(owner_id, free_best_photos):
+            save_result_photo(owner_id, free_best_photos)
 
 
 
@@ -104,8 +132,6 @@ if __name__ == '__main__':
 
                         update_result(result_get_photos)
 
-
-
                     elif request == "quit":
                         write_msg(event.user_id, "Спасибо за использование программы. До свидания!")
                         Run = False
@@ -117,7 +143,11 @@ if __name__ == '__main__':
                         write_msg(event.user_id, "Повторите ввод! Или начать всё сначала: clear")
 
                     else:
-                        write_msg(event.user_id, "Введенные данные не распознаны! help - справка. clear - ч")
+                        write_msg(event.user_id, "Введенные данные не распознаны!")
+                        write_msg(event.user_id, f'help - вывод данной справки')
+                        write_msg(event.user_id, f'find - ввод критериев и поиск')
+                        write_msg(event.user_id, f'show - просмотр ранее полученных результатов')
+                        write_msg(event.user_id, f'quit - выход из программы')
 
 
 

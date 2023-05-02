@@ -1,5 +1,5 @@
 import psycopg2
-
+import os
 
 def insert_partners(crit1, crit2, crit3):
     pass
@@ -18,33 +18,6 @@ def save_person_to_db(id):
                    """, (id,))
             conn.commit()
     return
-
-def save_value_for_search(id, age, sex, city):
-    with psycopg2.connect(database="VKinderDB", user="postgres", password="123", host='localhost') as conn:
-        with conn.cursor() as cur:
-            name_ = f'{id}_{age}_{sex}_{city}'
-            cur.execute(""" 
-                                WITH pid as (
-                                SELECT id_person 
-                                FROM person
-                                WHERE id_vk_person = %s
-                                )
-                                
-                                INSERT INTO querys(
-                                                name_, 
-                                                id_person, 
-                                                partner_age, 
-                                                partner_city, 
-                                                parnter_sex
-                                                )
-                                VALUES(%s, (SELECT * FROM pid), %s , %s, %s)
-                                ON CONFLICT
-                                DO NOTHING
-                                RETURNING id_query;
-                              """, (str(id), name_, str(age), city, sex))
-            result_id = cur.fetchall()
-            conn.commit()
-            return result_id
 
 def save_result(result, id_person, sex, age, city):
     partners_items = result
@@ -78,7 +51,23 @@ def save_result(result, id_person, sex, age, city):
                 conn.commit()
 
 
-def save_result_photo(_result):
+def save_photo_to_db(owner_id, photos):
+    photo_folder = 'Tempary_saved_photos/'.format(owner_id)
+    try:
+        for photo in photos:
+            with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'wb') as f:
+                for buf in r.iter_content(1024):
+                    if buf:
+                        f.write(buf)
+                        sleep(2)
+        return 1
+    except:
+        return 0
+
+
+
+
+
     photos = _result
     for item in _result:
         photos_partner = item['respose']['items']
