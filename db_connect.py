@@ -55,24 +55,28 @@ def save_result(result, id_person, sex, age, city):
 
 def save_photo_to_db(owner_id, photos):
     photo_folder = 'Tempary_saved_photos/'.format(owner_id)
-    try:
-        for photo in photos:
-            with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'wb') as f:
-                with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
-                    with conn.cursor() as cur:
-                        cur.execute("""                 
-                                       INSERT INTO partners_photos(
-                                                        id_partner, 
-                                                        photo, 
-                                                        photo_link, 
-                                                        num_like,
-                                                        )
-                                        VALUES((SELECT * FROM pid), %s, %s , %s, %s, %s)
-                                        ON CONFLICT
-                                        DO NOTHING
-                                        RETURNING id_partner;
-                                      """, (str(id_person), name, surname, sex, str(age), city))
-                        conn.commit()
+    for photo in photos:
+        with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'rb') as f:
+            with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""                 
+                        WITH part_id as (
+                        SELECT id_partner
+                        FROM partners
+                        WHERE id_vk_partner = %s
+                        )
+                        INSERT INTO partners_photos(
+                                        id_partner, 
+                                        photo, 
+                                        photo_link, 
+                                        num_like,
+                                        )
+                        VALUES((SELECT * FROM part_id), %s, %s , %s, %s)
+                        ON CONFLICT
+                        DO NOTHING
+                        RETURNING id_partner;
+                        """, (str(owner_id), psycopg2.Binary(f), photo['url_photo'],  photo['likes']))
+                    conn.commit()
 
 
 
