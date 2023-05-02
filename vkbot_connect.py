@@ -3,7 +3,7 @@ import requests
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from Settings import vk_group_token, vk_base_link as vk_link, count_raw_search
-
+from time import sleep
 # token = input('Token: ')
 gruop_token = vk_group_token
 
@@ -52,8 +52,8 @@ class VK_SEARCH:  # Подключаемся к VK
                   'sex': sex,
                   'hometown': city,
                   'count': count_raw_search,
-                  'is_closed': 'false',
                   'has_photo': 1,
+                  'fields': 'counters'
                   }
         response = requests.get(url, params={**self.params, **params})
         return response.json()
@@ -71,6 +71,7 @@ class VK_SEARCH:  # Подключаемся к VK
             prom_result = response.json()
 
             raw_result.append({'partner_id': partner['id'], 'partner_photos': prom_result})
+            sleep(1)
 
 
         return raw_result
@@ -87,3 +88,4 @@ class VK_SEARCH:  # Подключаемся к VK
                       }
             response = requests.get(url, params={**self.params, **params})
             prom_result = response.json()
+            sleep(1)

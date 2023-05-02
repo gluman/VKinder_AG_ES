@@ -4,18 +4,22 @@ from db_connect import save_person_to_db, save_result, save_photo_to_db,  update
 from Settings import vk_user_token, count_filtred_search
 import os
 from time import sleep
+import requests
 import pprint
 
 
 # Отбираем только три человека у которых профиль открыт.
 def filter_partners(info, count):
     partners_items = info['response']['items']
-
+    filtred_partners = []
     for item in partners_items:
         if item['is_closed'] == True:
-            partners_items.remove(item)
             continue
-    return partners_items[0:count]
+        else:
+            filtred_partners.append(item)
+
+
+    return filtred_partners[0:count]
 
 # Отбираем только три лучше фотографии
 def filter_free_best_photos(photos):
@@ -46,20 +50,17 @@ def filter_free_best_photos(photos):
 def tempory_save_photos(owner_id, photos):  # Сохраняем верменно локально фотографии по одному найденному человеку.
     if not os.path.exists('Tempary_saved_photos'):
         os.mkdir('Tempary_saved_photos')
-    photo_folder = 'Tempary_saved_photos/'.format(owner_id)
+    photo_folder = f'Tempary_saved_photos/{str(owner_id)}'
     if not os.path.exists(photo_folder):
         os.mkdir(photo_folder)
-    try:
-        for photo in photos:
-            r = request.get(photo['url_photo'], stream=True)
-            with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'wb') as f:
-                for buf in r.iter_content(1024):
-                    if buf:
-                        f.write(buf)
-                        sleep(2)
-        return 1
-    except:
-        return 0
+    for photo in photos:
+        r = requests.get(photo['url_photo'])
+        with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'wb') as f:
+            for buf in r.iter_content(1024):
+                if buf:
+                    f.write(buf)
+        sleep(2)
+
 
 
 
@@ -70,7 +71,7 @@ def get_and_save_photo(list_):
         photos = item['partner_photos']['response']['items']
         free_best_photos = filter_free_best_photos(photos)
         if tempory_save_photos(owner_id, free_best_photos):
-            save_result_photo(owner_id, free_best_photos)
+            save_photo_to_db(owner_id, free_best_photos)
 
 
 
