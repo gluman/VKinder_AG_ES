@@ -53,7 +53,7 @@ def tempory_save_photos(owner_id, photos):  # Сохраняем верменн�
     photo_folder = os.path.join(f'Tempary_saved_photos', f'{owner_id}')
     if not os.path.exists(photo_folder):
         os.mkdir(photo_folder)
-    for photo in photos:
+    for photo in photos: # сохраняем локально каждое фото в папку с id человека
         r = requests.get(photo['url_photo'])
         with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'wb') as f:
             for buf in r.iter_content(1024):
@@ -131,8 +131,8 @@ if __name__ == '__main__':
 
                             # Сохраняем найденные фотографии в БД.
                             get_and_save_photo(result_get_photos)
+                            write_msg(event.user_id, f"Отобрано {len(result_search_normal)} человек(-а).")
 
-                        # update_result(result_get_photos)
                         else:
                             write_msg(event.user_id, "Никого не найдено, задайте другие критерии поиска")
                             scenario = ''
