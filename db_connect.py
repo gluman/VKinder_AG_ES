@@ -1,13 +1,13 @@
+import shutil
+
 import psycopg2
 import os
 from Settings import db_name, db_host, db_user, db_pass
-from time import sleep
 
-def insert_partners(crit1, crit2, crit3):
-    pass
 
 def show_results():
     pass
+
 
 def save_person_to_db(id):
     with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
@@ -20,6 +20,7 @@ def save_person_to_db(id):
                    """, (id,))
             conn.commit()
     return
+
 
 def save_result(result, id_person, sex, age, city):
     partners_items = result
@@ -54,31 +55,33 @@ def save_result(result, id_person, sex, age, city):
 
 
 def save_photo_to_db(owner_id, photos):
-    photo_folder = 'Tempary_saved_photos/'.format(owner_id)
     for photo in photos:
-        with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'rb') as f:
+        photo_path = os.path.join('Tempary_saved_photos', f'{owner_id}', f"{photo['id_photo']}.jpg")
+        with open(photo_path, 'rb') as f:
             with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
                 with conn.cursor() as cur:
-                    cur.execute("""                 
+                    data = f.read()
+                    _exec = cur.execute("""                 
                         WITH part_id as (
                         SELECT id_partner
                         FROM partners
                         WHERE id_vk_partner = %s
                         )
                         INSERT INTO partners_photos(
-                                        id_partner, 
+                                        id_partner,
+                                        id_vk_photo, 
                                         photo, 
                                         photo_link, 
-                                        num_like,
+                                        num_like
                                         )
-                        VALUES((SELECT * FROM part_id), %s, %s , %s, %s)
+                        VALUES((SELECT * FROM part_id), %s, %s, %s , %s)
                         ON CONFLICT
                         DO NOTHING
                         RETURNING id_partner;
-                        """, (str(owner_id), psycopg2.Binary(f), photo['url_photo'],  photo['likes']))
+                        """, (str(owner_id), str(photo['id_photo']), psycopg2.Binary(data), photo['url_photo'], str(photo['likes'])))
                     conn.commit()
 
-
+    shutil.rmtree(os.path.join('Tempary_saved_photos', f'{owner_id}'))
 
 
 def update_result(info):

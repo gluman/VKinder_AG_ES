@@ -50,7 +50,7 @@ def filter_free_best_photos(photos):
 def tempory_save_photos(owner_id, photos):  # Сохраняем верменно локально фотографии по одному найденному человеку.
     if not os.path.exists('Tempary_saved_photos'):
         os.mkdir('Tempary_saved_photos')
-    photo_folder = f'Tempary_saved_photos/{str(owner_id)}'
+    photo_folder = os.path.join(f'Tempary_saved_photos', f'{owner_id}')
     if not os.path.exists(photo_folder):
         os.mkdir(photo_folder)
     for photo in photos:
@@ -60,6 +60,7 @@ def tempory_save_photos(owner_id, photos):  # Сохраняем верменн�
                 if buf:
                     f.write(buf)
         sleep(2)
+    return True
 
 
 
@@ -119,19 +120,23 @@ if __name__ == '__main__':
 
                         # Делаем запрос в VK c передаваемыми параметрами, полученный результат
                         result_search_raw = vk_search.search_users(age, sex, city)
-
                         result_search_normal = filter_partners(result_search_raw, count_filtred_search)
+                        if len(result_search_normal) >=1:
 
                         # Сохраняем полученные результаты в БД
-                        save_result(result_search_normal, event.user_id, sex, age, city)
+                            save_result(result_search_normal, event.user_id, sex, age, city)
 
-                        # Запрашиваем фотографии по ранее найденным людям.
-                        result_get_photos = vk_search.vk_get_partners_photos(result_search_normal)
+                            # Запрашиваем фотографии по ранее найденным людям.
+                            result_get_photos = vk_search.vk_get_partners_photos(result_search_normal)
 
-                        # Сохраняем найденные фотографии в БД.
-                        get_and_save_photo(result_get_photos)
+                            # Сохраняем найденные фотографии в БД.
+                            get_and_save_photo(result_get_photos)
 
-                        update_result(result_get_photos)
+                        # update_result(result_get_photos)
+                        else:
+                            write_msg(event.user_id, "Никого не найдено, задайте другие критерии поиска")
+                            scenario = ''
+                            request = "find"
 
                     elif request == "quit":
                         write_msg(event.user_id, "Спасибо за использование программы. До свидания!")
