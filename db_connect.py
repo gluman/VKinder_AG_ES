@@ -104,10 +104,28 @@ def db_get_partners(criteria):
     return result
 
 def db_get_current_partner(id):
-    select = """ SELECT id_partner, id_person, id_vk_partner, name_, surname, sex, profile_link, age_, city, favorite 
-                         FROM partners
-                     """
     where = f'WHERE partners.id_partner = {id}'
+    select = f"""WITH pid as (
+                 SELECT id_partner FROM partners
+                 {where})
+                 SELECT photo 
+                 FROM partners
+                 WHERE id_partner = (SELECT * FROM pid)
+                 """
+
+
+    with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
+        with conn.cursor() as cur:
+            cur.execute(select)
+            result = cur.fetchall()
+            conn.commit()
+    return result
+
+def db_attach_current_partner_photo(owner_id):
+    select = """ SELECT id_photos, id_partner, id_vk_photo, photo, photo_link, num_like 
+                 FROM partners_photos
+                         """
+    where = f'WHERE partners.id_partner = {owner_id}'
     select += where
     with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
         with conn.cursor() as cur:
@@ -116,6 +134,4 @@ def db_get_current_partner(id):
             conn.commit()
     return result
 
-def db_attach_current_partner_photo():
-    pass
 

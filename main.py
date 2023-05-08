@@ -46,23 +46,29 @@ def main_filter_free_best_photos(photos):
         free_bets_photos.append({'likes': i[0], 'id_photo': i[1], 'url_photo': i[2]})
     return free_bets_photos
 
-def main_tempory_save_photos(owner_id, photos):  # Сохраняем верменно локально фотографии по одному найденному человеку.
+def main_tempory_save_photos(owner_id, photos, _source):  # Сохраняем верменно локально фотографии по одному найденному человеку.
     if not os.path.exists('Tempary_saved_photos'):
         os.mkdir('Tempary_saved_photos')
     photo_folder = os.path.join(f'Tempary_saved_photos', f'{owner_id}')
     if not os.path.exists(photo_folder):
         os.mkdir(photo_folder)
     for photo in photos: # сохраняем локально каждое фото в папку с id человека
-        r = requests.get(photo['url_photo'])
-        with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'wb') as f:
-            for buf in r.iter_content(1024):
-                if buf:
-                    f.write(buf)
-        sleep(2)
+        if _source == 'vk'
+            r = requests.get(photo['url_photo'])
+            with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'wb') as f:
+                for buf in r.iter_content(1024):
+                    if buf:
+                        f.write(buf)
+        elif _source == 'folder':
+
+            with open(os.path.join(photo_folder), 'wb') as f:
+                f.write(photo[0])
+
+        sleep(1)
     return True
 
 
-def get_and_save_photo(list_):
+def main_get_and_save_photo(list_):
     for item in list_: # проходим по каждому из найденых людей.
         owner_id = item['partner_id']
         photos = item['partner_photos']['response']['items']
@@ -70,16 +76,19 @@ def get_and_save_photo(list_):
         if main_tempory_save_photos(owner_id, free_best_photos):
             db_save_photo_to_db(owner_id, free_best_photos)
 
-def get_partners(criteria):
+def main_get_partners(criteria):
     partners = db_get_partners(criteria)
     return partners
 
-def show_current_partner(id):
+def main_current_partner(id):
     current_partner = db_get_current_partner(id)
     return current_partner
 
-def show_attach_current_partner_photo(id):
-    photos = db_attach_current_partner_photo()
+def main_attach_current_partner_photo(id):
+    photos = db_attach_current_partner_photo(id)
+    main_tempory_save_photos(id, photos)
+
+
 
 
 
@@ -138,7 +147,7 @@ if __name__ == '__main__':
                             result_get_photos = vk_search.vk_get_partners_photos(result_search_normal)
 
                             # Сохраняем найденные фотографии в БД.
-                            get_and_save_photo(result_get_photos)
+                            main_get_and_save_photo(result_get_photos)
                             write_msg(event.user_id, f"Отобрано {len(result_search_normal)} человек(-а).")
                             write_msg(event.user_id, f"Показать резултаты? (y - да")
                             scenario = 'get_after_find'
@@ -152,6 +161,47 @@ if __name__ == '__main__':
                     elif request == 'y' and scenario == 'get_after_find':
                         pass
 
+
+
+                    elif request == 'show':
+                        write_msg(event.user_id, "Показать только избранных(favorites)? или всех(all)?")
+                        scenario = 'show'
+
+                    elif (request == 'favorites' or
+                          request == 'all' or
+                          request == 'next' or
+                          request == 'add_favorite' or
+                          request == 'delete' or
+                          request == 'clear') and scenario == 'show':
+                        db_partners = main_get_partners(request)
+                        if len(db_partners) > 0 and (request == 'favorites' or
+                            request == 'all'):
+                            partner_1 = main_current_partner(db_partners[0])
+                            write_msg(event.user_id, f'Имя и фамилия: {partner_1[4]} {partner_1[5]}')
+                            write_msg(event.user_id, f'Ссылка на профиль: {partner_1[7]}')
+                            attach = main_attach_current_partner_photo(partner_1[0])
+                            write_msg(event.user_id, attach())
+
+                            write_msg(event.user_id, f'next - вывод следующего')
+                            write_msg(event.user_id, f'add_favorite - добавить в избранное')
+                            write_msg(event.user_id, f'delete - удалить всю информацию по человеке из БД')
+                            write_msg(event.user_id, f'clear - в основное меню')
+                            scenario = 'showcurrent'
+
+                        elif len(db_partners) == 0 and (request == 'favorites' or request == 'all'):
+                            write_msg(event.user_id, "Никого не найдено!")
+                        # elif
+
+
+
+                    elif request == 'next' and scenario == 'showcurrent':
+
+                        pass
+                    elif request == 'add_favorite' and scenario == 'showcurrent':
+                        pass
+                    elif request == 'delete' and scenario == 'showcurrent':
+                        pass
+
                     elif request == "quit":
                         write_msg(event.user_id, "Спасибо за использование программы. До свидания!")
                         Run = False
@@ -159,25 +209,12 @@ if __name__ == '__main__':
                     elif request == 'clear':
                         scenario = ''
 
+                    elif scenario == 'showcurrent':
+                        write_msg(event.user_id, f'next - вывод следующего')
+                        write_msg(event.user_id, f'add_favorite - добавить в избранное')
+                        write_msg(event.user_id, f'delete - удалить всю информацию по человеке из БД')
+                        write_msg(event.user_id, f'clear - в основное меню')
 
-                    elif request == 'show':
-                        write_msg(event.user_id, "Показать только избранных(favorites)? или всех(all)?")
-                        scenario = 'show'
-
-                    elif (request == 'favorites' or request == 'all') and scenario == 'show':
-                        db_partners = get_partners(request)
-                        if len(db_partners) > 0:
-                            show_current_partner(db_partners.pop([0][1]))
-                            scenario = 'showcurrent'
-
-                        else:
-                            write_msg(event.user_id, "Показать только избранных(favorites)? или всех(all)?")
-                    elif request == 'next' and scenario == 'showcurrent':
-                        pass
-                    elif request == 'add_favorite' and scenario == 'showcurrent':
-                        pass
-                    elif request == 'delete' and scenario == 'showcurrent':
-                        pass
                     else:
                         write_msg(event.user_id, "Введенные данные не распознаны!")
                         write_msg(event.user_id, f'help - вывод данной справки')
