@@ -1,6 +1,6 @@
 from vk_api.longpoll import VkEventType
 from vkbot_connect import longpoll, VK_SEARCH, write_msg
-from db_connect import save_person_to_db, save_result, save_photo_to_db,  update_result
+from db_connect import db_save_person_to_db, db_save_result, db_save_photo_to_db,  db_get_partners, db_get_current_partner, db_attach_current_partner_photo
 from Settings import vk_user_token, count_filtred_search
 import os
 from time import sleep
@@ -9,7 +9,7 @@ import pprint
 
 
 # Отбираем только три человека у которых профиль открыт.
-def filter_partners(info, count):
+def main_filter_partners(info, count):
     partners_items = info['response']['items']
     filtred_partners = []
     for item in partners_items:
@@ -22,7 +22,7 @@ def filter_partners(info, count):
     return filtred_partners[0:count]
 
 # Отбираем только три лучше фотографии
-def filter_free_best_photos(photos):
+def main_filter_free_best_photos(photos):
     _photos = []
     count_likes = 0
     for photo in photos:
@@ -44,10 +44,9 @@ def filter_free_best_photos(photos):
     free_bets_photos = []
     for i in tempary_list_photos:
         free_bets_photos.append({'likes': i[0], 'id_photo': i[1], 'url_photo': i[2]})
-
     return free_bets_photos
 
-def tempory_save_photos(owner_id, photos):  # Сохраняем верменно локально фотографии по одному найденному человеку.
+def main_tempory_save_photos(owner_id, photos):  # Сохраняем верменно локально фотографии по одному найденному человеку.
     if not os.path.exists('Tempary_saved_photos'):
         os.mkdir('Tempary_saved_photos')
     photo_folder = os.path.join(f'Tempary_saved_photos', f'{owner_id}')
@@ -63,16 +62,25 @@ def tempory_save_photos(owner_id, photos):  # Сохраняем верменн�
     return True
 
 
-
-
-
 def get_and_save_photo(list_):
     for item in list_: # проходим по каждому из найденых людей.
         owner_id = item['partner_id']
         photos = item['partner_photos']['response']['items']
-        free_best_photos = filter_free_best_photos(photos)
-        if tempory_save_photos(owner_id, free_best_photos):
-            save_photo_to_db(owner_id, free_best_photos)
+        free_best_photos = main_filter_free_best_photos(photos)
+        if main_tempory_save_photos(owner_id, free_best_photos):
+            db_save_photo_to_db(owner_id, free_best_photos)
+
+def get_partners(criteria):
+    partners = db_get_partners(criteria)
+    return partners
+
+def show_current_partner(id):
+    current_partner = db_get_current_partner(id)
+    return current_partner
+
+def show_attach_current_partner_photo(id):
+    photos = db_attach_current_partner_photo()
+
 
 
 
@@ -113,18 +121,18 @@ if __name__ == '__main__':
                         scenario = 'find_it'
                         #     пишем данные персоны (пользователя, с которым взаимодействуем)
                         # Сохраняем id пользователя.
-                        id_row_user_id = save_person_to_db(event.user_id)
+                        id_row_user_id = db_save_person_to_db(event.user_id)
 
                         # создаем экземпляр класса VK
                         vk_search = VK_SEARCH(vk_user_token, event.user_id)
 
                         # Делаем запрос в VK c передаваемыми параметрами, полученный результат
                         result_search_raw = vk_search.search_users(age, sex, city)
-                        result_search_normal = filter_partners(result_search_raw, count_filtred_search)
+                        result_search_normal = main_filter_partners(result_search_raw, count_filtred_search)
                         if len(result_search_normal) >=1:
 
                         # Сохраняем полученные результаты в БД
-                            save_result(result_search_normal, event.user_id, sex, age, city)
+                            db_save_result(result_search_normal, event.user_id, sex, age, city)
 
                             # Запрашиваем фотографии по ранее найденным людям.
                             result_get_photos = vk_search.vk_get_partners_photos(result_search_normal)
@@ -132,11 +140,17 @@ if __name__ == '__main__':
                             # Сохраняем найденные фотографии в БД.
                             get_and_save_photo(result_get_photos)
                             write_msg(event.user_id, f"Отобрано {len(result_search_normal)} человек(-а).")
+                            write_msg(event.user_id, f"Показать резултаты? (y - да")
+                            scenario = 'get_after_find'
+
 
                         else:
                             write_msg(event.user_id, "Никого не найдено, задайте другие критерии поиска")
                             scenario = ''
                             request = "find"
+
+                    elif request == 'y' and scenario == 'get_after_find':
+                        pass
 
                     elif request == "quit":
                         write_msg(event.user_id, "Спасибо за использование программы. До свидания!")
@@ -145,9 +159,25 @@ if __name__ == '__main__':
                     elif request == 'clear':
                         scenario = ''
 
-                    elif scenario != '':
-                        write_msg(event.user_id, "Повторите ввод! Или начать всё сначала: clear")
 
+                    elif request == 'show':
+                        write_msg(event.user_id, "Показать только избранных(favorites)? или всех(all)?")
+                        scenario = 'show'
+
+                    elif (request == 'favorites' or request == 'all') and scenario == 'show':
+                        db_partners = get_partners(request)
+                        if len(db_partners) > 0:
+                            show_current_partner(db_partners.pop([0][1]))
+                            scenario = 'showcurrent'
+
+                        else:
+                            write_msg(event.user_id, "Показать только избранных(favorites)? или всех(all)?")
+                    elif request == 'next' and scenario == 'showcurrent':
+                        pass
+                    elif request == 'add_favorite' and scenario == 'showcurrent':
+                        pass
+                    elif request == 'delete' and scenario == 'showcurrent':
+                        pass
                     else:
                         write_msg(event.user_id, "Введенные данные не распознаны!")
                         write_msg(event.user_id, f'help - вывод данной справки')

@@ -9,7 +9,7 @@ def show_results():
     pass
 
 
-def save_person_to_db(id):
+def db_save_person_to_db(id):
     with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
         with conn.cursor() as cur:
             cur.execute(""" 
@@ -22,7 +22,7 @@ def save_person_to_db(id):
     return
 
 
-def save_result(result, id_person, sex, age, city):
+def db_save_result(result, id_person, sex, age, city):
     partners_items = result
     for item in partners_items:
         name = item['first_name']
@@ -54,7 +54,7 @@ def save_result(result, id_person, sex, age, city):
                 conn.commit()
 
 
-def save_photo_to_db(owner_id, photos):
+def db_save_photo_to_db(owner_id, photos):
     for photo in photos:
         photo_path = os.path.join('Tempary_saved_photos', f'{owner_id}', f"{photo['id_photo']}.jpg")
         with open(photo_path, 'rb') as f:
@@ -83,6 +83,39 @@ def save_photo_to_db(owner_id, photos):
 
     shutil.rmtree(os.path.join('Tempary_saved_photos', f'{owner_id}'))
 
+def db_get_partners(criteria):
+    select = """ SELECT id_partner, id_person, id_vk_partner, name_, surname, sex, profile_link, age_, city, favorite 
+                  FROM partners
+              """
+    if criteria == 'favorites':
+        where = 'WHERE partners.favorive = True'
+        select += where
+    if criteria == 'all':
+        select = select
+    else:
+        where = f'WHERE partners.id_partner in {criteria}'
+        select += where
 
-def update_result(info):
+    with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
+        with conn.cursor() as cur:
+            cur.execute(select)
+            result = cur.fetchall()
+            conn.commit()
+    return result
+
+def db_get_current_partner(id):
+    select = """ SELECT id_partner, id_person, id_vk_partner, name_, surname, sex, profile_link, age_, city, favorite 
+                         FROM partners
+                     """
+    where = f'WHERE partners.id_partner = {id}'
+    select += where
+    with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
+        with conn.cursor() as cur:
+            cur.execute(select)
+            result = cur.fetchall()
+            conn.commit()
+    return result
+
+def db_attach_current_partner_photo():
     pass
+
