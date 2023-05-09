@@ -1,20 +1,41 @@
 from random import randrange
 import requests
 import vk_api
+from vk_api import VkUpload
 from vk_api.longpoll import VkLongPoll, VkEventType
-from Settings import vk_group_token, vk_base_link as vk_link, count_raw_search
+from Settings import vk_group_token, vk_base_link as vk_link, count_raw_search, vk_group_id
 from time import sleep
 # token = input('Token: ')
 gruop_token = vk_group_token
 
+vk = vk_api.VkApi(token=gruop_token)
+api = vk.get_api()
 
-vk = vk_api.VkApi(token=vk_group_token)
 longpoll = VkLongPoll(vk)
+upload = VkUpload(vk)
+upload_url = api.photos.getMessagesUploadServer(group_id=vk_group_id, v='5.131')['upload_url']
 
+def write_attach(id, message, file):
+    upload_url = api.photos.getMessagesUploadServer(group_id=vk_group_id, v='5.131')['upload_url']
+    request = requests.post(upload_url, files={'photo': open(file, "rb")})
+    params = {
+        'server': request.json()['server'],
+        'photo': request.json()['photo'],
+        'hash': request.json()['hash'],
+        'group_id': vk_group_id
+    }
+    photo_id = api.photos.saveMessagesPhoto(**params)[0]['id']
+    params = {
+        'user_id': id,  # ID пользователя, которому мы должны отправить картинку
+        'random_id': 0,
+        'message': message,
+        'attachment': f'photo-{vk_group_id}_{photo_id}'
+    }
+    api.messages.send(**params)
 def write_msg(user_id, message):
-    vk.method('messages.send', {'user_id': user_id, 'message': message,  'random_id': randrange(10 ** 7),})
+    vk.method('messages.send', {'user_id': user_id, 'message': message,  'random_id': randrange(10 ** 7)})
 
-class VK_SEARCH:  # Подключаемся к VK
+class VK:  # Подключаемся к VK
     def __init__(self, access_token, user_id, version='5.131'):
         self.token = access_token
         self.id = user_id
@@ -53,7 +74,7 @@ class VK_SEARCH:  # Подключаемся к VK
                   'hometown': city,
                   'count': count_raw_search,
                   'has_photo': 1,
-                  'fields': 'counters'
+                  'fields': 'counters, screen_name',
                   }
         response = requests.get(url, params={**self.params, **params})
         return response.json()

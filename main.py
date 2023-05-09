@@ -1,6 +1,16 @@
+import json
+import shutil
+
 from vk_api.longpoll import VkEventType
-from vkbot_connect import longpoll, VK_SEARCH, write_msg
-from db_connect import db_save_person_to_db, db_save_result, db_save_photo_to_db,  db_get_partners, db_get_current_partner, db_attach_current_partner_photo
+from vkbot_connect import longpoll, VK, write_msg, write_attach, upload
+from db_connect import \
+    db_save_person_to_db, \
+    db_save_result, \
+    db_save_photo_to_db,  \
+    db_get_partners, \
+    db_get_current_partner, \
+    db_attach_current_partner_photo, \
+    db_change_favorites
 from Settings import vk_user_token, count_filtred_search
 import os
 from time import sleep
@@ -53,16 +63,15 @@ def main_tempory_save_photos(owner_id, photos, _source):  # Сохраняем �
     if not os.path.exists(photo_folder):
         os.mkdir(photo_folder)
     for photo in photos: # сохраняем локально каждое фото в папку с id человека
-        if _source == 'vk'
+        if _source == 'vk':
             r = requests.get(photo['url_photo'])
             with open(os.path.join(photo_folder, '%s.jpg' % photo['id_photo']), 'wb') as f:
                 for buf in r.iter_content(1024):
                     if buf:
                         f.write(buf)
         elif _source == 'folder':
-
-            with open(os.path.join(photo_folder), 'wb') as f:
-                f.write(photo[0])
+            with open(os.path.join(photo_folder, '%s.jpg' % photo[2]), 'wb') as f:
+                f.write(photo[3])
 
         sleep(1)
     return True
@@ -73,11 +82,11 @@ def main_get_and_save_photo(list_):
         owner_id = item['partner_id']
         photos = item['partner_photos']['response']['items']
         free_best_photos = main_filter_free_best_photos(photos)
-        if main_tempory_save_photos(owner_id, free_best_photos):
+        if main_tempory_save_photos(owner_id, free_best_photos, 'vk'):
             db_save_photo_to_db(owner_id, free_best_photos)
 
-def main_get_partners(criteria):
-    partners = db_get_partners(criteria)
+def main_get_partners(criteria, owner_id):
+    partners = db_get_partners(criteria, owner_id)
     return partners
 
 def main_current_partner(id):
@@ -86,7 +95,18 @@ def main_current_partner(id):
 
 def main_attach_current_partner_photo(id):
     photos = db_attach_current_partner_photo(id)
-    main_tempory_save_photos(id, photos)
+    if main_tempory_save_photos(id, photos, 'folder'):
+        return True
+
+
+
+
+# def get_profile_link(partners):
+#     for partner in partners:
+#         profile_link = vk_search.get_users_info(partner['id'])
+#         _link = profile_link[0]
+#         db_update_profile_link(partner['id'], _link)
+#     return True
 
 
 
@@ -106,6 +126,10 @@ if __name__ == '__main__':
                         write_msg(event.user_id, f'help - вывод данной справки')
                         write_msg(event.user_id, f'find - ввод критериев и поиск')
                         write_msg(event.user_id, f'show - просмотр ранее полученных результатов')
+                        write_msg(event.user_id, f'show - > next - показать следующего человека')
+                        write_msg(event.user_id, f'show - > add - добавить в избранные')
+                        write_msg(event.user_id, f'show - > rem - удалить из избранных')
+                        write_msg(event.user_id, f'show - > del - удалить из БД>')
                         write_msg(event.user_id, f'quit - выход из программы')
 
                     elif request == "find":
@@ -133,7 +157,7 @@ if __name__ == '__main__':
                         id_row_user_id = db_save_person_to_db(event.user_id)
 
                         # создаем экземпляр класса VK
-                        vk_search = VK_SEARCH(vk_user_token, event.user_id)
+                        vk_search = VK(vk_user_token, event.user_id)
 
                         # Делаем запрос в VK c передаваемыми параметрами, полученный результат
                         result_search_raw = vk_search.search_users(age, sex, city)
@@ -149,8 +173,8 @@ if __name__ == '__main__':
                             # Сохраняем найденные фотографии в БД.
                             main_get_and_save_photo(result_get_photos)
                             write_msg(event.user_id, f"Отобрано {len(result_search_normal)} человек(-а).")
-                            write_msg(event.user_id, f"Показать резултаты? (y - да")
-                            scenario = 'get_after_find'
+                            # write_msg(event.user_id, f"Показать резултаты? (yes - да, no - нет")
+                            # scenario = 'get_after_find'
 
 
                         else:
@@ -158,69 +182,91 @@ if __name__ == '__main__':
                             scenario = ''
                             request = "find"
 
-                    elif request == 'y' and scenario == 'get_after_find':
-                        pass
+                    # elif request == 'yes' and scenario == 'get_after_find':
+                    #     req
+
 
 
 
                     elif request == 'show':
-                        write_msg(event.user_id, "Показать только избранных(favorites)? или всех(all)?")
+                        write_msg(event.user_id, "Показать только избранных(top)? или всех(all)?")
                         scenario = 'show'
 
-                    elif (request == 'favorites' or
+                    elif (request == 'top' or
                           request == 'all' or
                           request == 'next' or
-                          request == 'add_favorite' or
-                          request == 'delete' or
-                          request == 'clear') and scenario == 'show':
-                        db_partners = main_get_partners(request)
-                        if len(db_partners) > 0 and (request == 'favorites' or
-                            request == 'all'):
-                            partner_1 = main_current_partner(db_partners[0])
-                            write_msg(event.user_id, f'Имя и фамилия: {partner_1[4]} {partner_1[5]}')
-                            write_msg(event.user_id, f'Ссылка на профиль: {partner_1[7]}')
-                            attach = main_attach_current_partner_photo(partner_1[0])
-                            write_msg(event.user_id, attach())
+                          request == 'rem' or
+                          request == 'add' or
+                          request == 'del'):
 
-                            write_msg(event.user_id, f'next - вывод следующего')
-                            write_msg(event.user_id, f'add_favorite - добавить в избранное')
-                            write_msg(event.user_id, f'delete - удалить всю информацию по человеке из БД')
-                            write_msg(event.user_id, f'clear - в основное меню')
-                            scenario = 'showcurrent'
+                        if request == 'top' or request == 'all':
+                            db_partners = main_get_partners(request, event.user_id)
+                            if len(db_partners) > 0:
+                                index = 0
+                                partner = db_partners[index]
+                                write_msg(event.user_id, f'Имя и фамилия: {partner[3]} {partner[4]}')
+                                write_msg(event.user_id, f'Ссылка на профиль: {partner[6]}')
+                                attach = main_attach_current_partner_photo(partner[0])
+                                temp_folder = os.path.join('Tempary_saved_photos', str(partner[0]))
+                                files = os.listdir(path=temp_folder)
 
-                        elif len(db_partners) == 0 and (request == 'favorites' or request == 'all'):
-                            write_msg(event.user_id, "Никого не найдено!")
-                        # elif
+                                for file in files:
+                                    write_attach(event.user_id, 'Фото:', os.path.join(temp_folder, file))
+                                shutil.rmtree(temp_folder)
+                                write_msg(event.user_id, f'next: следующий/ add_favorite: в избранное/ delete: удалить/ clear: вначало')
+                                scenario = 'show'
+                            else:
+                                write_msg(event.user_id,
+                                          f'Ничего нет в БД')
 
 
+                        elif len(db_partners) > 0 and request == 'next' and scenario =='show':
+                            if index >= len(db_partners)-1:
+                                write_msg(event.user_id, "Готово!")
+                                request = 'clear'
+                            elif len(db_partners) == 0:
+                                write_msg(event.user_id,
+                                          f'Ничего нет в БД')
+                                request = 'clear'
+                            else:
+                                index += 1
+                                partner = db_partners[index]
+                                write_msg(event.user_id, f'Имя и фамилия: {partner[3]} {partner[4]}')
+                                write_msg(event.user_id, f'Ссылка на профиль: {partner[6]}')
+                                attach = main_attach_current_partner_photo(partner[0])
+                                temp_folder = os.path.join('Tempary_saved_photos', str(partner[0]))
+                                files = os.listdir(path=temp_folder)
 
-                    elif request == 'next' and scenario == 'showcurrent':
+                                for file in files:
+                                    write_attach(event.user_id, 'Фото:', os.path.join(temp_folder, file))
+                                shutil.rmtree(temp_folder)
+                                write_msg(event.user_id,
+                                          f'next: следующий/ add_favorite:в избранное/ delete: удалить/ clear: вначало')
 
-                        pass
-                    elif request == 'add_favorite' and scenario == 'showcurrent':
-                        pass
-                    elif request == 'delete' and scenario == 'showcurrent':
-                        pass
+                        elif (request == 'add' or request == 'rem') and scenario == 'show':
+                            id_partner = partner[0]
+                            if db_change_favorites(id_partner, request):
+                                write_msg(event.user_id, 'Добавлено в избранные')
+
+
+                        elif request == 'del' and scenario == 'show':
+                            pass
+
+
 
                     elif request == "quit":
                         write_msg(event.user_id, "Спасибо за использование программы. До свидания!")
                         Run = False
 
                     elif request == 'clear':
-                        scenario = ''
+                        scenario = 'help'
 
-                    elif scenario == 'showcurrent':
-                        write_msg(event.user_id, f'next - вывод следующего')
-                        write_msg(event.user_id, f'add_favorite - добавить в избранное')
-                        write_msg(event.user_id, f'delete - удалить всю информацию по человеке из БД')
-                        write_msg(event.user_id, f'clear - в основное меню')
 
                     else:
                         write_msg(event.user_id, "Введенные данные не распознаны!")
-                        write_msg(event.user_id, f'help - вывод данной справки')
-                        write_msg(event.user_id, f'find - ввод критериев и поиск')
-                        write_msg(event.user_id, f'show - просмотр ранее полученных результатов')
-                        write_msg(event.user_id, f'quit - выход из программы')
+                        write_msg(event.user_id, f"Текущий контекст: {scenario}")
+                        write_msg(event.user_id, f'help - для спарвки')
+
 
 
 
