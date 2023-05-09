@@ -213,7 +213,7 @@ if __name__ == '__main__':
                                 for file in files:
                                     write_attach(event.user_id, 'Фото:', os.path.join(temp_folder, file))
                                 shutil.rmtree(temp_folder)
-                                write_msg(event.user_id, f'next: следующий/ add_favorite: в избранное/ delete: удалить/ clear: вначало')
+                                write_msg(event.user_id, f'next: следующий/ add: в избранное/ rem: удалить из избранного/ del: удалить/ clear: вначало')
                                 scenario = 'show'
                             else:
                                 write_msg(event.user_id,
@@ -240,13 +240,12 @@ if __name__ == '__main__':
                                 for file in files:
                                     write_attach(event.user_id, 'Фото:', os.path.join(temp_folder, file))
                                 shutil.rmtree(temp_folder)
-                                write_msg(event.user_id,
-                                          f'next: следующий/ add_favorite:в избранное/ delete: удалить/ clear: вначало')
+                                write_msg(event.user_id, f'next: следующий/ add: в избранное/ rem: удалить из избранного/ del: удалить/ clear: вначало')
 
                         elif (request == 'add' or request == 'rem') and scenario == 'show':
                             id_partner = partner[0]
                             if db_change_favorites(id_partner, request):
-                                write_msg(event.user_id, 'Добавлено в избранные')
+                                write_msg(event.user_id, 'Выполнено')
 
 
                         elif request == 'del' and scenario == 'show':
