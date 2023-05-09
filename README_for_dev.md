@@ -1,5 +1,5 @@
 # База данных 
-1. Объектная модель данных описана в файле http://DB_shema.html - ссылку скорректировать когда будет на  github
+1. Объектная модель данных представленна по [ссылке](https://github.com/gluman/VKinder_AG_ES/blob/main/DB/VKinderDB%20-%20public.png)
 2. База данных называется VKinderDB, СУБР PostgreSQL 15. root пользователь БД: postgre:123
 3. Create_Tables.sql - создвание структуры БД, Drop_Tables.sql - удаление всех данных из БД.
 4. person - таблица с информацией о текущем пользователе, с кем взаимодействует бот
