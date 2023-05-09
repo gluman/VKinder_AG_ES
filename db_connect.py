@@ -88,7 +88,7 @@ def db_get_partners(criteria, owner_id):
     select = """ SELECT id_partner, id_person, id_vk_partner, name_, surname, sex, profile_link, age_, city
                   FROM partners
               """
-    if criteria == 'favorites':
+    if criteria == 'top':
         where = 'WHERE partners.favorite = True and '
         select += where
     elif criteria == 'all':
@@ -152,5 +152,27 @@ def db_change_favorites(id, context):
     with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
         with conn.cursor() as cur:
             cur.execute(update)
+            conn.commit()
+    return True
+
+def db_del_photo_from_db(id):
+    delete = f"""DELETE FROM partners_photos 
+             WHERE id_partner={id};
+             """
+    with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
+        with conn.cursor() as cur:
+            cur.execute(delete)
+            conn.commit()
+
+
+def db_del_from_db(id):
+    db_del_photo_from_db(id)
+
+    delete = f""" DELETE FROM partners 
+                    WHERE id_partner={id};
+                """
+    with psycopg2.connect(database=db_name, user=db_user, password=db_pass, host=db_host) as conn:
+        with conn.cursor() as cur:
+            cur.execute(delete)
             conn.commit()
     return True

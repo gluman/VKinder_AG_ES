@@ -10,8 +10,9 @@ from db_connect import \
     db_get_partners, \
     db_get_current_partner, \
     db_attach_current_partner_photo, \
-    db_change_favorites
-from Settings import vk_user_token, count_filtred_search
+    db_change_favorites, \
+    db_del_from_db
+from Settings import count_filtred_search #, vk_user_token
 import os
 from time import sleep
 import requests
@@ -99,20 +100,6 @@ def main_attach_current_partner_photo(id):
         return True
 
 
-
-
-# def get_profile_link(partners):
-#     for partner in partners:
-#         profile_link = vk_search.get_users_info(partner['id'])
-#         _link = profile_link[0]
-#         db_update_profile_link(partner['id'], _link)
-#     return True
-
-
-
-
-
-
 if __name__ == '__main__':
     Run = True
     scenario = ''
@@ -122,8 +109,9 @@ if __name__ == '__main__':
 
                 if event.to_me:
                     request = event.text
-                    if request == "help" and scenario == '':
+                    if request == "help":
                         write_msg(event.user_id, f'help - вывод данной справки')
+                        write_msg(event.user_id, f'token - ввод токена пользователя VK')
                         write_msg(event.user_id, f'find - ввод критериев и поиск')
                         write_msg(event.user_id, f'show - просмотр ранее полученных результатов')
                         write_msg(event.user_id, f'show - > next - показать следующего человека')
@@ -131,6 +119,16 @@ if __name__ == '__main__':
                         write_msg(event.user_id, f'show - > rem - удалить из избранных')
                         write_msg(event.user_id, f'show - > del - удалить из БД>')
                         write_msg(event.user_id, f'quit - выход из программы')
+
+
+                    elif request == 'token':
+                        scenario = 'token'
+                        write_msg(event.user_id, f'Введите токен пользователя VK: ')
+
+                    elif request[0:6] == 'vk1.a.' and scenario == 'token':
+                        vk_user_token = request
+                        scenario = ''
+                        write_msg(event.user_id, f'Токен записан')
 
                     elif request == "find":
                         write_msg(event.user_id, f'Укажите возраст для поиска (от 18 до 99):')
@@ -154,11 +152,15 @@ if __name__ == '__main__':
                         scenario = 'find_it'
                         #     пишем данные персоны (пользователя, с которым взаимодействуем)
                         # Сохраняем id пользователя.
+                        write_msg(event.user_id, f'Поиск начался...')
                         id_row_user_id = db_save_person_to_db(event.user_id)
 
                         # создаем экземпляр класса VK
-                        vk_search = VK(vk_user_token, event.user_id)
-
+                        try:
+                            vk_search = VK(vk_user_token, event.user_id)
+                        except:
+                            write_msg(event.user_id, f'Не задан токен. Введите команду token')
+                            continue
                         # Делаем запрос в VK c передаваемыми параметрами, полученный результат
                         result_search_raw = vk_search.search_users(age, sex, city)
                         result_search_normal = main_filter_partners(result_search_raw, count_filtred_search)
@@ -172,7 +174,7 @@ if __name__ == '__main__':
 
                             # Сохраняем найденные фотографии в БД.
                             main_get_and_save_photo(result_get_photos)
-                            write_msg(event.user_id, f"Отобрано {len(result_search_normal)} человек(-а).")
+                            write_msg(event.user_id, f"Отобрано {len(result_search_normal)} человек(-а) и добавлены в БД. show - просмотр")
                             # write_msg(event.user_id, f"Показать резултаты? (yes - да, no - нет")
                             # scenario = 'get_after_find'
 
@@ -181,11 +183,6 @@ if __name__ == '__main__':
                             write_msg(event.user_id, "Никого не найдено, задайте другие критерии поиска")
                             scenario = ''
                             request = "find"
-
-                    # elif request == 'yes' and scenario == 'get_after_find':
-                    #     req
-
-
 
 
                     elif request == 'show':
@@ -220,10 +217,10 @@ if __name__ == '__main__':
                                           f'Ничего нет в БД')
 
 
-                        elif len(db_partners) > 0 and request == 'next' and scenario =='show':
+                        elif request == 'next' and scenario =='show':
                             if index >= len(db_partners)-1:
-                                write_msg(event.user_id, "Готово!")
-                                request = 'clear'
+                                write_msg(event.user_id, "Вы просмотрели всех. next - начать с начала.")
+                                index = -1
                             elif len(db_partners) == 0:
                                 write_msg(event.user_id,
                                           f'Ничего нет в БД')
@@ -249,8 +246,12 @@ if __name__ == '__main__':
 
 
                         elif request == 'del' and scenario == 'show':
-                            pass
-
+                            id_partner = partner[0]
+                            if db_del_from_db(id_partner):
+                                tuple(list(db_partners).pop())
+                                write_msg(event.user_id, 'Выполнено')
+                        else:
+                            write_msg(event.user_id, 'Неверная команда, повторите!')
 
 
                     elif request == "quit":
@@ -258,7 +259,7 @@ if __name__ == '__main__':
                         Run = False
 
                     elif request == 'clear':
-                        scenario = 'help'
+                        scenario = 'start'
 
 
                     else:
